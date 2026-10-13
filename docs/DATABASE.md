@@ -8,4 +8,6 @@ Apply migrations in order with the Supabase CLI. `0001_foundation.sql` creates p
 
 `20261013070810_attendance_window_and_capacity.sql` preserves the check-in window before closure, blocks review after closure, makes invitation retries capacity-safe, and revokes anonymous access to schema helper/event-trigger functions.
 
+`20261013071805_disambiguate_invitation_conflict.sql` targets the named invitation uniqueness constraint explicitly. This avoids ambiguity between the table's `email` column and the function's `email` output field during invitation upserts.
+
 Session codes are intentionally inaccessible to students and are stored only as a digest. The original code is returned once by `create_session_with_code`. Students submit a code through `submit_attendance`; coaches approve/reject through `review_attendance_attempt`. After the check-in window, `close_attendance_session` closes the session and marks remaining roster members absent. Do not expose service role credentials in the client.
