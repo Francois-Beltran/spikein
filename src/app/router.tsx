@@ -3,23 +3,31 @@ import { useAuth } from './providers'
 import { AppShell } from '../components/AppShell'
 import { SignInPage, SetupPage, GoogleCallbackPage, CompleteProfilePage } from '../features/auth/AuthPages'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
-import { AdminAttendancePage, NewSessionPage, NewTeamPage, SessionsPage, StudentAttendancePage, StudentSessionsPage, StudentTeamsPage, TeamDetailPage, TeamsPage } from '../features/dashboard/ManagementPages'
+import { AdminAttendancePage, NewSessionPage, NewTeamPage, SessionDetailPage, SessionsPage, StudentAttendancePage, StudentSessionsPage, StudentTeamsPage, StudentTeamDetailPage, TeamDetailPage, TeamsPage } from '../features/dashboard/ManagementPages'
 
 function RootGate() {
-  const { user, profile, profileError, isGoogleUser, loading, configured, refreshProfile } = useAuth()
+  const { user, profile, profileError, isGoogleUser, loading, configured } = useAuth()
   if (!configured) return <SetupPage />
   if (loading) return <div className="grid min-h-screen place-items-center text-sm text-muted">Getting your team ready…</div>
   if (!user) return <Navigate to="/sign-in" replace />
   if (!isGoogleUser) return <Navigate to="/sign-in" replace />
-  if (profileError) return <div className="grid min-h-screen place-items-center px-6"><div className="max-w-md rounded-2xl border border-line bg-white p-6 text-center shadow-card"><h1 className="text-xl font-semibold">We couldn’t check your team profile</h1><p className="mt-2 text-sm leading-6 text-muted">{profileError}</p><button onClick={()=>void refreshProfile().catch(()=>undefined)} className="primary-button mt-5">Try again</button></div></div>
-  if (!profile) return <CompleteProfilePage />
+  if (profileError) return <Navigate to="/sign-in" replace />
+  if (!profile) return <Navigate to="/sign-in" replace />
   return <AppShell><Outlet /></AppShell>
 }
 
 function SignInGate() {
-  const { user, isGoogleUser, loading } = useAuth()
+  const { user, profile, isGoogleUser, loading } = useAuth()
   if (loading) return <div className="grid min-h-screen place-items-center text-sm text-muted">Getting your team ready…</div>
-  return user && isGoogleUser ? <Navigate to="/" replace /> : <SignInPage />
+  return user && isGoogleUser && profile ? <Navigate to="/" replace /> : <SignInPage />
+}
+
+function ProfileSetupGate() {
+  const { user, profile, isGoogleUser, loading, configured } = useAuth()
+  if (!configured) return <SetupPage />
+  if (loading) return <div className="grid min-h-screen place-items-center text-sm text-muted">Checking your Google account…</div>
+  if (!user || !isGoogleUser) return <Navigate to="/sign-in" replace />
+  return profile ? <Navigate to="/" replace /> : <CompleteProfilePage />
 }
 
 function RoleGate({ role, children }: { role: 'coach'|'student'; children: React.ReactNode }) { const {profile}=useAuth(); return profile?.role===role?children:<Navigate to={role==='coach'?'/':'/admin'} replace /> }
@@ -27,6 +35,7 @@ function RoleGate({ role, children }: { role: 'coach'|'student'; children: React
 export const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInGate /> },
   { path: '/auth/callback', element: <GoogleCallbackPage /> },
+  { path: '/complete-profile', element: <ProfileSetupGate /> },
   { path: '/', element: <RootGate />, children: [
     { index: true, element: <DashboardPage /> },
     { path: 'admin', element: <RoleGate role="coach"><DashboardPage /></RoleGate> },
@@ -35,9 +44,11 @@ export const router = createBrowserRouter([
     { path: 'admin/teams/:teamId', element: <RoleGate role="coach"><TeamDetailPage /></RoleGate> },
     { path: 'admin/sessions', element: <RoleGate role="coach"><SessionsPage /></RoleGate> },
     { path: 'admin/sessions/new', element: <RoleGate role="coach"><NewSessionPage /></RoleGate> },
+    { path: 'admin/sessions/:sessionId', element: <RoleGate role="coach"><SessionDetailPage /></RoleGate> },
     { path: 'admin/attendance', element: <RoleGate role="coach"><AdminAttendancePage /></RoleGate> },
     { path: 'sessions', element: <RoleGate role="student"><StudentSessionsPage /></RoleGate> },
     { path: 'teams', element: <RoleGate role="student"><StudentTeamsPage /></RoleGate> },
+    { path: 'teams/:teamId', element: <RoleGate role="student"><StudentTeamDetailPage /></RoleGate> },
     { path: 'attendance', element: <RoleGate role="student"><StudentAttendancePage /></RoleGate> },
   ] },
   { path: '*', element: <Navigate to="/" replace /> },

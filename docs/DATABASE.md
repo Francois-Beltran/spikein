@@ -12,4 +12,6 @@ Apply migrations in order with the Supabase CLI. `0001_foundation.sql` creates p
 
 Coaches generate or replace a team's join code from the team detail page and share it directly with players. The plaintext appears only in the generation response; replacing a code invalidates the previous one. Students enter the code on My teams. The join RPC validates the trusted Google identity, serializes roster changes per team, and enforces the 20-player cap.
 
+`20261013080900_session_management_student_rosters.sql` adds coach-only RPCs to rotate a session check-in code and delete a session, plus student-visible membership/profile policies scoped to teams they already joined. `20261013081000_fix_student_roster_policy_recursion.sql` uses the existing security-definer membership helper in those policies to avoid recursive RLS evaluation.
+
 Session codes are intentionally inaccessible to students and are stored only as a digest. The original code is returned once by `create_session_with_code`. Students submit a code through `submit_attendance`; coaches approve/reject through `review_attendance_attempt`. After the check-in window, `close_attendance_session` closes the session and marks remaining roster members absent. Do not expose service role credentials in the client.

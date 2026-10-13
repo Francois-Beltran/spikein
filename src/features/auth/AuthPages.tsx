@@ -60,7 +60,7 @@ export function GoogleCallbackPage() {
     const timer = window.setTimeout(() => setTimedOut(true), 10_000)
     return () => window.clearTimeout(timer)
   }, [])
-  if (user) return <Navigate to="/" replace />
+  if (user) return <Navigate to="/complete-profile" replace />
   if (timedOut && !loading) return <Navigate to="/sign-in?error=google_callback" replace />
   return <div role="status" className="grid min-h-screen place-items-center bg-canvas px-6"><div className="flex items-center gap-3 rounded-2xl border border-line bg-white px-5 py-4 text-sm font-medium text-ink shadow-card"><LoaderCircle size={19} className="animate-spin text-green" />Finishing Google sign in…</div></div>
 }

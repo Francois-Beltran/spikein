@@ -87,6 +87,15 @@
 - The OAuth profile RPC update was applied to the live Supabase project outside its migration history because the project has no recorded migrations; the canonical SQL file is present locally.
 - PWA install testing requires a deployed HTTPS origin and real mobile devices.
 
+## Auth, session, and student roster refinements
+- Initial visits now go to Google sign-in. A new student can reach profile setup only after returning from the Google OAuth callback; an existing profile goes straight to their dashboard.
+- Student check-in forms now appear only during the database window (30 minutes before a session through 2 hours after it ends), validate the 8-character code, and display errors beside the relevant session.
+- Coaches can generate or rotate a session check-in code from its dedicated management page. Codes remain hashed in the database. Coaches can delete a session after confirming a warning that names the related check-ins and records that will also be removed.
+- Reduced the coach overview's team/session actions to compact buttons.
+- Added student team detail pages with teammate names. RLS limits roster and profile reads to students who share that team; the policy uses `is_group_member` to avoid recursive RLS evaluation.
+- Verified the live project has no anonymous execution on the new session-management RPCs. Simulated the signed-in athlete role in a rolled-back query and confirmed roster reads return the athlete's team membership and profile. `npm run typecheck` and the production build passed. The current browser opens at `/sign-in` with the Google sign-in button.
+- Live data showed the athlete is a verified Google student and belongs to the team. One existing session had no code row, so its coach must generate a code on that session's management page before check-in can work.
+
 ## Team management and attendance
 - Split coach and student navigation into dedicated, phone-first routes. Coaches have `/admin/teams`, `/admin/sessions`, and `/admin/attendance`, with separate `/new` pages for teams and sessions. Students have `/sessions`, `/teams`, and `/attendance`.
 - Team creation uses authenticated RPCs. The `team_join_codes` migration replaces email invitations with coach-generated shared codes. Coaches can rotate a code; students enter it on My teams while signed into a verified Google student account. Codes are hashed at rest, membership changes serialize per team, and the server enforces the 20-player cap.
