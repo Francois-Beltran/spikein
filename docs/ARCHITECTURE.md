@@ -4,4 +4,4 @@ Spike In is a login-only React SPA. The Vite build is hosted as static files; Su
 
 Providers own the shared TanStack Query client and auth/profile state. React Router gates the workspace on authentication and a profile. Feature-owned screens live under `src/features`; shared presentation is in `src/components`; versioned SQL lives in `supabase/migrations`.
 
-New users can create a student profile through the restricted `create_student_profile` RPC after Google OAuth and a verified-email check. The app does not offer self-service role selection: coaches must be provisioned by a trusted administrator before first sign-in. Group invitations and controlled coach creation are required follow-ups before public onboarding.
+New users can create a student profile through the restricted `create_student_profile` RPC after Google OAuth and a verified-email check. The app does not offer self-service role selection: coaches must be provisioned by a trusted administrator before first sign-in. Team access is granted using coach-generated join codes; no email invitation flow is used.

@@ -11,13 +11,8 @@ export function useStudentDashboard() {
     enabled: Boolean(supabase && user),
     staleTime: 0,
     refetchOnMount: 'always',
-    refetchInterval: 15_000,
-    refetchIntervalInBackground: false,
     queryFn: async () => {
       if (!supabase || !user) throw new Error('Sign in to load your player dashboard.')
-
-      const { error: claimError } = await supabase.rpc('claim_team_invitations')
-      if (claimError) throw claimError
 
       const { data: memberships, error: membershipsError } = await supabase
         .from('group_members')

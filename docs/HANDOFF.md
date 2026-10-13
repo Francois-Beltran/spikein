@@ -20,7 +20,7 @@
 - Stored only a SHA-256 digest for session codes so the original code is not retrievable from the database.
 - Chose per-profile RLS and group ownership checks; session-code access is coach-only.
 - Kept navigation destinations for later phases visible as scaffolding links; only the overview is implemented.
-- Student profile creation is restricted to a database RPC; coaches require trusted administrator provisioning. Secure group invitations and coach creation remain prerequisites before public onboarding.
+- Student profile creation is restricted to a database RPC; coaches require trusted administrator provisioning. Team access uses coach-generated join codes.
 - Google OAuth is the only auth provider. The callback is `/auth/callback`; configure matching Supabase and Google OAuth redirect URLs.
 
 ## Verification
@@ -65,7 +65,7 @@
 
 ## Remaining work
 - Configure Supabase credentials and apply migration to a real project.
-- Add secure invitation/role provisioning, group/member management, session/code flows, attendance RPCs, tracker, excuses, roster, audit trail, and realtime.
+- Add trusted role provisioning, group/member management, session/code flows, attendance RPCs, tracker, excuses, roster, audit trail, and realtime.
 - Add a centralized offline state and disabled-action guidance as network-dependent features are implemented.
 - Replace placeholder icons and dates/data with final assets and connected data.
 - Run Lighthouse and device installation/update verification on HTTPS deployment.
@@ -89,14 +89,14 @@
 
 ## Team management and attendance
 - Split coach and student navigation into dedicated, phone-first routes. Coaches have `/admin/teams`, `/admin/sessions`, and `/admin/attendance`, with separate `/new` pages for teams and sessions. Students have `/sessions`, `/teams`, and `/attendance`.
-- Team creation and email invitations use authenticated RPCs. Invitations are pinned to the exact email of a verified Google account, reserve one of 20 roster spots, and are claimed automatically after Google sign-in and student profile setup. The team page creates a prefilled mail draft/shareable invite message; no outbound email provider is configured.
+- Team creation uses authenticated RPCs. The `team_join_codes` migration replaces email invitations with coach-generated shared codes. Coaches can rotate a code; students enter it on My teams while signed into a verified Google student account. Codes are hashed at rest, membership changes serialize per team, and the server enforces the 20-player cap.
 - Sessions are created with private eight-character check-in codes. Only the coach sees the code once on the creation confirmation; only its digest is stored. Students can submit during the 30 minutes before start through two hours after end. Coaches review check-ins, and may close after that window to record absences.
-- Added RLS-protected invitation, attendance attempt, and attendance record tables and database RPCs. Removed direct client writes to memberships, sessions, and session codes. Anonymous execution was revoked for group ownership/member helper functions and the RLS event trigger.
+- Added attendance attempt and attendance record tables and database RPCs. Removed direct client writes to memberships, sessions, and session codes. Anonymous execution was revoked for group ownership/member helper functions and the RLS event trigger. The invitation table and RPCs were removed by `team_join_codes`.
 - Verified the live Supabase project reports RLS enabled on the three new tables, authenticated access for required RPCs, no anonymous RPC execution (including legacy helpers/event trigger), and no direct authenticated writes to membership/session/code tables. Security advisor still flags the intended authenticated `SECURITY DEFINER` workflow RPCs and the pre-existing disabled leaked-password protection; performance advisor reports unindexed foreign keys and several existing multiple-policy notices.
 - `npm run typecheck` — passed after the route and attendance changes.
 - `npm run build` — passed; generated PWA assets. Vite reports the existing single app chunk is above its 500 kB advisory threshold (534.52 kB minified).
 - Opened `http://localhost:5173`; the signed-out browser showed the expected Google-only sign-in screen. Dashboard routes require a Google-authenticated coach/student session for visual smoke testing.
-- Student team data now rechecks invitation claims on a 15-second foreground interval and when the page mounts. The student overview and team page show the signed-in Google email; the team page offers a manual refresh. Live data confirmed an accepted student invitation and membership while observed app requests were from the coach account, pointing to the student using a different Google identity or browser session.
+- The student overview and team page show the signed-in Google email. Students now join teams using the code supplied by the coach; there is no email matching or automatic invitation claim step.
 
 ## Next steps
 1. Configure the Supabase project and apply the migration.
