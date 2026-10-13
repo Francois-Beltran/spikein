@@ -14,4 +14,6 @@ Coaches generate or replace a team's join code from the team detail page and sha
 
 `20261013080900_session_management_student_rosters.sql` adds coach-only RPCs to rotate a session check-in code and delete a session, plus student-visible membership/profile policies scoped to teams they already joined. `20261013081000_fix_student_roster_policy_recursion.sql` uses the existing security-definer membership helper in those policies to avoid recursive RLS evaluation.
 
+`20261013082000_disable_checkin_window_for_testing.sql` temporarily disables the session check-in time window and code expiry in `submit_attendance` for testing. The original rule remains behind `enforce_checkin_window`; set it to `true` and set `ENFORCE_CHECKIN_WINDOW` in `src/features/dashboard/attendanceConfig.ts` to `true` before deployment. Team membership, verified Google student identity, session-open status, and code matching remain required.
+
 Session codes are intentionally inaccessible to students and are stored only as a digest. The original code is returned once by `create_session_with_code`. Students submit a code through `submit_attendance`; coaches approve/reject through `review_attendance_attempt`. After the check-in window, `close_attendance_session` closes the session and marks remaining roster members absent. Do not expose service role credentials in the client.

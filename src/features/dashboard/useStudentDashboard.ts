@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../app/providers'
 import { supabase } from '../../lib/supabase'
 import type { Team, TeamSession } from './useCoachDashboard'
+import { ENFORCE_CHECKIN_WINDOW } from './attendanceConfig'
 
 export function useStudentDashboard() {
   const { user } = useAuth()
@@ -26,7 +27,9 @@ export function useStudentDashboard() {
       const earliest = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
       const [teamsResult, sessionsResult] = await Promise.all([
         supabase.from('groups').select('id,name,created_at').in('id', groupIds).order('created_at', { ascending: true }),
-        supabase.from('sessions').select('id,group_id,title,type,starts_at,ends_at,closed_at').in('group_id', groupIds).gte('ends_at', earliest).order('starts_at', { ascending: true }),
+        ENFORCE_CHECKIN_WINDOW
+          ? supabase.from('sessions').select('id,group_id,title,type,starts_at,ends_at,closed_at').in('group_id', groupIds).gte('ends_at', earliest).order('starts_at', { ascending: true })
+          : supabase.from('sessions').select('id,group_id,title,type,starts_at,ends_at,closed_at').in('group_id', groupIds).order('starts_at', { ascending: true }),
       ])
       if (teamsResult.error) throw teamsResult.error
       if (sessionsResult.error) throw sessionsResult.error
