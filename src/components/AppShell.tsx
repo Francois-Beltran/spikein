@@ -1,4 +1,4 @@
-import { CalendarDays, CheckCheck, CircleHelp, LayoutDashboard, LogOut, Users, Volleyball } from 'lucide-react'
+import { CalendarDays, CheckCheck, CircleHelp, LayoutDashboard, LogOut, Users } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../app/providers'
 
