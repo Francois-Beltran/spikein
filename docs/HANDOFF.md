@@ -1,115 +1,85 @@
-# Handoff
+# Spike In — Project Handoff
 
-## Completed
-- Scaffolded the first-task foundation: Vite + React 18 + TypeScript, Tailwind, React Router, TanStack Query, Supabase JS, and vite-plugin-pwa.
-- Added setup-aware Supabase authentication, sign-in, profile completion, role-bearing workspace shell, and initial responsive overview UI.
-- Restricted sign-in and sign-up to Google OAuth; removed password auth and self-selected profile roles.
-- Added initial schema/RLS migration for profiles, groups, members, sessions, and admin-only hashed session codes.
-- Added PWA app shell caching with Supabase requests excluded from cache and starter brand icons.
-- Added setup docs and `.env.example`.
+Updated: 2026-10-13
 
-## Files changed
-- App config: `package.json`, `tsconfig.json`, `vite.config.ts`, `tailwind.config.js`, `postcss.config.js`, `index.html`, `.env.example`.
-- App: `src/app/*`, `src/components/AppShell.tsx`, `src/features/auth/AuthPages.tsx`, `src/features/dashboard/DashboardPage.tsx`, `src/lib/supabase.ts`, `src/main.tsx`, `src/styles/index.css`.
-- Database: `supabase/migrations/0001_foundation.sql`.
-- PWA: `public/icons/*`, `public/apple-touch-icon.png`.
-- Docs: `README.md`, `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/PWA.md`, this file, `docs/CHANGELOG.md`.
+## Project at a glance
 
-## Decisions
-- Used TypeScript consistently.
-- Stored only a SHA-256 digest for session codes so the original code is not retrievable from the database.
-- Chose per-profile RLS and group ownership checks; session-code access is coach-only.
-- Kept navigation destinations for later phases visible as scaffolding links; only the overview is implemented.
-- Student profile creation is restricted to a database RPC; coaches require trusted administrator provisioning. Team access uses coach-generated join codes.
-- Google OAuth is the only auth provider. The callback is `/auth/callback`; configure matching Supabase and Google OAuth redirect URLs.
+Spike In is a mobile-first volleyball team attendance web app/PWA for coaches and students. It is a Vite + React 18 + TypeScript single-page app. Main libraries are React Router, TanStack Query, Tailwind CSS, `lucide-react`, and `@supabase/supabase-js`. Supabase provides Google OAuth, Postgres, RLS, and the workflow RPCs.
 
-## Verification
-- `npm install --no-audit --no-fund` — completed; npm noted esbuild's install script needs approval in this environment.
-- `npm run typecheck` — passed.
-- `npm run build` — passed (1674 modules transformed; PWA manifest and service worker generated). The sandbox initially denied file resolution; the elevated workspace build completed successfully.
+- Workspace: `D:\spikein`
+- Git branch: `main`
+- Remote: `https://github.com/Francois-Beltran/spikein.git`
+- Supabase project ref: `oydtgplnppkivpnnaars`
+- Local app: `http://localhost:5173`
+- Supabase client is configured from `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; `.env` is local and must never be copied into docs, logs, or commits.
 
-## Latest change
-- Replaced email/password sign-in with Google-only OAuth sign-in/sign-up.
-- Removed the self-service profile-completion form. Authenticated users without a pre-provisioned profile see a team-admin message.
-- Updated student profile RPC to require a Google-verified email claim.
-- Added the `/auth/callback` route and a Google OAuth redirect setup note.
-- `npm run typecheck` — passed after the auth update.
-- `npm run build` — passed after the auth update; PWA manifest and service worker generated.
+## Product and access rules
 
-## OAuth smoke check
-- Opened the local app at `http://localhost:5173`, clicked Google sign-in, and observed a successful Google OAuth return to `/auth/callback`.
-- The callback remained on its loading screen after authentication. Updated `GoogleCallbackPage` to route authenticated users into the app and return unauthenticated users to sign-in after a bounded wait.
-- Re-tested: after the callback fix, the app routed to `/` and showed the expected “Your team profile isn’t ready yet” state for this Google account.
-- `npm run typecheck` and `npm run build` — passed after the callback fix; PWA files generated.
+- Google is the only sign-in/sign-up provider. OAuth asks Google to show its account chooser.
+- Authenticated sessions are checked for Google provider metadata before profile/dashboard access.
+- Students can create their own student profile after verified Google sign-in. Coach role must be provisioned by a trusted administrator; never add self-service role selection or role elevation.
+- Coaches enter at `/admin`; students enter at `/`. Routes are guarded by profile role.
+- Teams use shared coach-generated join codes (12 hexadecimal characters). Email invitations were removed.
+- Session check-in codes are eight characters. The database stores hashes only; coaches see a code on creation/rotation.
+- Dashboard design should remain phone-first and keep touch targets accessible. Apple Design and UI/UX Pro Max were used for prior dashboard work.
 
-## Coach dashboard
-- Replaced sample dashboard metrics and hard-coded sessions with Supabase-backed coach data for owned teams, memberships, and upcoming sessions.
-- Added create-team and schedule-session dialogs, week/session metrics, real loading/empty/error/offline states, and explicit placeholders for attendance functionality not present in migration 0001.
-- Preserved the trusted-provisioning requirement for coach profiles; no self-service role elevation was added.
-- `npm run typecheck` — passed after the dashboard implementation.
-- `npm run build` — passed; Vite reports the existing single app chunk is above its 500 kB advisory threshold (516.55 kB minified).
+## Main code locations
 
-## Google first-sign-in profile setup
-- Root cause: authenticated users without a matching `profiles` row were shown a dead-end message. The existing student profile RPC was never called from the app, and profile lookup errors were silently treated as missing profiles.
-- Added a student-only profile setup form populated from Google account name metadata. It calls `create_student_profile`; coach role selection is not offered.
-- Split auth/profile loading and surfaced profile lookup errors separately from a genuinely missing profile.
-- Tightened the live `create_student_profile` RPC to require an authenticated user with a confirmed email and Google identity from trusted `auth.users` metadata, while always inserting role `student`. The SQL is versioned locally in `supabase/migrations/0002_google_student_profile.sql`.
-- Verified the live RPC definition and confirmed the signed-in coach account now reaches the coach dashboard.
-- `npm run typecheck` and `npm run build` — passed. Vite still reports the single bundle above the 500 kB advisory threshold (518.82 kB minified).
+- `src/app/providers.tsx` — auth/profile state and React Query provider.
+- `src/app/router.tsx` — auth gates and role-based route routing.
+- `src/components/AppShell.tsx` — responsive workspace shell/navigation.
+- `src/features/auth/AuthPages.tsx` — Google OAuth, callback, student profile setup.
+- `src/features/dashboard/DashboardPage.tsx` — dashboard overview.
+- `src/features/dashboard/ManagementPages.tsx` — team/session management, student views, attendance submission/review.
+- `src/features/dashboard/useCoachDashboard.ts` / `useStudentDashboard.ts` — dashboard data queries.
+- `src/features/dashboard/attendanceConfig.ts` — client-side temporary attendance-window switch.
+- `src/lib/supabase.ts` — public anon-key client only.
+- `supabase/migrations/` — versioned schema/RPC/policy changes; apply in timestamp order.
+- `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/PWA.md` — supporting docs. Some older sections in these files may not reflect recent work; prefer this handoff and the latest migrations when they conflict.
 
-## Google account selection and provider gate
-- Added `prompt=select_account` to Google OAuth so sign-in opens Google's account chooser.
-- Added a client route/session gate using Supabase trusted `app_metadata` provider fields. Non-Google sessions do not load profiles or reach the dashboard.
-- When a non-Google session is present on the sign-in page, initiating Google OAuth clears only that browser's local session before redirecting.
-- `npm run typecheck` and `npm run build` — passed; the single app bundle remains above Vite's 500 kB advisory threshold (519.18 kB minified).
+## Attendance flow and current testing mode
 
-## Remaining work
-- Configure Supabase credentials and apply migration to a real project.
-- Add trusted role provisioning, group/member management, session/code flows, attendance RPCs, tracker, excuses, roster, audit trail, and realtime.
-- Add a centralized offline state and disabled-action guidance as network-dependent features are implemented.
-- Replace placeholder icons and dates/data with final assets and connected data.
-- Run Lighthouse and device installation/update verification on HTTPS deployment.
+1. A verified Google student who is a member of the team submits a session code through `submit_attendance`. This creates one `pending` row in `attendance_attempts` for that student/session.
+2. The coach attendance page loads their sessions, attempts, athlete profiles, and attendance records. The PostgREST profile embed must name the student FK explicitly: `profiles!attendance_attempts_student_id_fkey(full_name)`, because attempts have both student and reviewer links to profiles.
+3. Coach approve/reject calls `review_attendance_attempt`. Approval updates the attempt and upserts a `present`/`late` row in `attendance_records`; rejection marks the attempt rejected and creates no attendance record.
+4. Once eligible to close, `close_attendance_session` closes the session, rejects outstanding pending attempts, and marks remaining roster members absent.
+5. Coach actions refresh the relevant attendance and dashboard queries. Supabase error objects are plain objects in some cases, so use the shared `errorMessage` helper instead of relying only on `instanceof Error`.
 
-## Mobile-first dashboards
-- Added a data-backed student dashboard that loads the signed-in student's teams and upcoming open sessions from Supabase, with loading, error, refresh, and roster-empty states. It does not invent attendance totals while attendance tables and check-in flows are not implemented.
-- Refined the coach overview for phone widths, including two-column metric cards, touch-friendly actions, and preserved session/team management sections.
-- Replaced the app shell's links to unfinished routes with working section navigation for Overview, Sessions, and Teams; added safe-area-aware mobile navigation, skip-to-content, focus rings, and reduced-motion/transparency support.
-- Added `/admin` as a coach-only route alias to the coach dashboard. Students are redirected to their own dashboard.
-- Applied Apple Design guidance for system typography, direct feedback, predictable navigation, safe areas, accessibility, and reduced motion; used UI/UX Pro Max guidance for responsive layouts and touch target sizing. Installed `apple-design` from `emilkowalski/skills` in the user's Codex skills directory.
-- `npm run typecheck` — passed.
-- `npm run build` — passed after running with workspace access required by Vite's file resolver. The existing single JavaScript chunk remains above the 500 kB advisory threshold (523.95 kB minified).
-- Opened `http://localhost:5173`; the current browser session is signed out, so the app correctly displayed Google-only sign-in. Authenticated dashboard rendering could not be visually confirmed in this session without completing Google account selection.
-- No database changes were needed.
+**The check-in time gate is intentionally disabled for testing.** `src/features/dashboard/attendanceConfig.ts` exports `ENFORCE_CHECKIN_WINDOW = false`; migration `20261013082000_disable_checkin_window_for_testing.sql` also sets the server-side `enforce_checkin_window` constant to `false`. Membership, verified Google student role, open session, and code hash checks remain active. Before deployment, the user must explicitly request enabling it; set both client and server switches to true and verify the 30-minutes-before / 2-hours-after rule.
 
-## Risks
-- The live foundation schema exists, but Supabase reports no migration history; it appears to have been applied outside versioned migrations.
-- Coach profiles still require trusted administrator provisioning; public onboarding must not allow role self-selection.
-- The OAuth profile RPC update was applied to the live Supabase project outside its migration history because the project has no recorded migrations; the canonical SQL file is present locally.
-- PWA install testing requires a deployed HTTPS origin and real mobile devices.
+## Latest incident and resolution
 
-## Auth, session, and student roster refinements
-- Initial visits now go to Google sign-in. A new student can reach profile setup only after returning from the Google OAuth callback; an existing profile goes straight to their dashboard.
-- Student check-in forms now appear only during the database window (30 minutes before a session through 2 hours after it ends), validate the 8-character code, and display errors beside the relevant session.
-- Coaches can generate or rotate a session check-in code from its dedicated management page. Codes remain hashed in the database. Coaches can delete a session after confirming a warning that names the related check-ins and records that will also be removed.
-- Reduced the coach overview's team/session actions to compact buttons.
-- Added student team detail pages with teammate names. RLS limits roster and profile reads to students who share that team; the policy uses `is_group_member` to avoid recursive RLS evaluation.
-- Verified the live project has no anonymous execution on the new session-management RPCs. Simulated the signed-in athlete role in a rolled-back query and confirmed roster reads return the athlete's team membership and profile. `npm run typecheck` and the production build passed. The current browser opens at `/sign-in` with the Google sign-in button.
-- Live data showed the athlete is a verified Google student and belongs to the team. One existing session had no code row, so its coach must generate a code on that session's management page before check-in can work.
+The recent pending-check-in issue had three connected causes/fixes:
 
-## Team management and attendance
-- Split coach and student navigation into dedicated, phone-first routes. Coaches have `/admin/teams`, `/admin/sessions`, and `/admin/attendance`, with separate `/new` pages for teams and sessions. Students have `/sessions`, `/teams`, and `/attendance`.
-- Team creation uses authenticated RPCs. The `team_join_codes` migration replaces email invitations with coach-generated shared codes. Coaches can rotate a code; students enter it on My teams while signed into a verified Google student account. Codes are hashed at rest, membership changes serialize per team, and the server enforces the 20-player cap.
-- Sessions are created with private eight-character check-in codes. Only the coach sees the code once on the creation confirmation; only its digest is stored. Students can submit during the 30 minutes before start through two hours after end. Coaches review check-ins, and may close after that window to record absences.
-- Added attendance attempt and attendance record tables and database RPCs. Removed direct client writes to memberships, sessions, and session codes. Anonymous execution was revoked for group ownership/member helper functions and the RLS event trigger. The invitation table and RPCs were removed by `team_join_codes`.
-- Verified the live Supabase project reports RLS enabled on the three new tables, authenticated access for required RPCs, no anonymous RPC execution (including legacy helpers/event trigger), and no direct authenticated writes to membership/session/code tables. Security advisor still flags the intended authenticated `SECURITY DEFINER` workflow RPCs and the pre-existing disabled leaked-password protection; performance advisor reports unindexed foreign keys and several existing multiple-policy notices.
-- `npm run typecheck` — passed after the route and attendance changes.
-- `npm run build` — passed; generated PWA assets. Vite reports the existing single app chunk is above its 500 kB advisory threshold (534.52 kB minified).
-- Opened `http://localhost:5173`; the signed-out browser showed the expected Google-only sign-in screen. Dashboard routes require a Google-authenticated coach/student session for visual smoke testing.
-- The student overview and team page show the signed-in Google email. Students now join teams using the code supplied by the coach; there is no email matching or automatic invitation claim step.
+- PostgREST could not infer the athlete profile because `attendance_attempts` has more than one FK to `profiles`. The admin query now names `attendance_attempts_student_id_fkey`.
+- The admin loader previously hid Supabase's plain-object error. It now reports which request stage failed and the returned message, with refresh/retry support.
+- Approve/reject failed inside the live `review_attendance_attempt` RPC. The parameter `coach_note` conflicted with the table column in the `UPDATE`. Migration `20261013100000_fix_attendance_review_note_ambiguity.sql` stores a trimmed value in `normalized_note` and uses that variable in the update.
 
-## Next steps
-1. Configure the Supabase project and apply the migration.
-2. Implement trusted coach/student onboarding and group management.
-3. Build session creation, code submission, and atomic coach review RPCs.
-4. Add records, close-session automation, tracker, excuses, and realtime.
-5. Verify on target devices and audit PWA behavior.
+The migration has been applied to Supabase project `oydtgplnppkivpnnaars`. The coach approval RPC was invoked under the authenticated coach identity inside a transaction and returned a `present` attendance record; rejection also completed. Both checks were rolled back. The existing check-in therefore remains pending in live data. Do not approve/reject that user's request unless the user asks.
+
+## Recent focused commits
+
+- `bf0bd11` — `fix attendance review end-to-end` (current latest)
+- `73fd6be` — `fix pending check-in profile relation`
+- `2e52316` — `fix admin attendance query errors`
+- `09828d1` — `fix: refresh coach pending check-ins`
+- `3eebf0a` — `chore: disable attendance window during testing`
+
+Continue with focused commits; do not bundle unrelated work. Current branch is `main`.
+
+## Verification and known caveats
+
+- `npx tsc --noEmit --noUnusedLocals false --noUnusedParameters false` passed after the latest attendance changes.
+- The strict project build currently reports an existing unused `Volleyball` import in `src/components/AppShell.tsx`. A direct Vite build also hit a Windows sandbox `EPERM` when resolving `index.html` in the last attempt. Do not report a complete production build until these blockers are resolved and the build succeeds.
+- No automated test suite is configured in `package.json`.
+- Do not reveal `.env` values or use any service-role key in client code.
+- Existing `docs/DATABASE.md` has an older narrative that implies the check-in window is active; the latest testing migration and this file are authoritative until the window is re-enabled.
+
+## Useful commands
+
+- `npm run dev` — local development server.
+- `npm run typecheck` — strict TypeScript project check.
+- `npm run build` — TypeScript project build followed by Vite/PWA build.
+- `npm run preview` — serve the production output locally.
+
+When continuing, check `git status`, review this handoff and the newest migration, then inspect the live UI/API behavior relevant to the user's next request. Preserve the Google-only access rules and the temporary check-in testing mode unless the user explicitly directs otherwise.
