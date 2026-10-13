@@ -19,6 +19,10 @@ h1, h2, h3 { font-family: inherit; }
 .primary-button:hover { background: #145d3d; }
 .primary-button:active { transform: translateY(1px); }
 .primary-button:disabled { opacity: .6; }
+.secondary-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid #e2e7e2; border-radius: 12px; background: white; padding: 0 15px; color: #33423a; font-size: 13px; font-weight: 600; transition: background .15s,border-color .15s,transform .1s; }
+.secondary-button:hover { border-color: #c6d2c8; background: #f8faf8; }
+.secondary-button:active { transform: translateY(1px); }
+.secondary-button:disabled { opacity: .55; }
 .google-button { display: inline-flex; min-height: 50px; align-items: center; justify-content: center; gap: 11px; border: 1px solid #dfe4e0; border-radius: 12px; background: white; color: #26332d; font-size: 13px; font-weight: 650; box-shadow: 0 1px 2px rgba(24,35,30,.04); transition: background .15s,border-color .15s; }
 .google-button:hover { border-color: #bfc9c2; background: #fbfcfb; }
 .google-button:disabled { opacity: .65; }

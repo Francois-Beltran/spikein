@@ -87,6 +87,16 @@
 - The OAuth profile RPC update was applied to the live Supabase project outside its migration history because the project has no recorded migrations; the canonical SQL file is present locally.
 - PWA install testing requires a deployed HTTPS origin and real mobile devices.
 
+## Team management and attendance
+- Split coach and student navigation into dedicated, phone-first routes. Coaches have `/admin/teams`, `/admin/sessions`, and `/admin/attendance`, with separate `/new` pages for teams and sessions. Students have `/sessions`, `/teams`, and `/attendance`.
+- Team creation and email invitations use authenticated RPCs. Invitations are pinned to the exact email of a verified Google account, reserve one of 20 roster spots, and are claimed automatically after Google sign-in and student profile setup. The team page creates a prefilled mail draft/shareable invite message; no outbound email provider is configured.
+- Sessions are created with private eight-character check-in codes. Only the coach sees the code once on the creation confirmation; only its digest is stored. Students can submit during the 30 minutes before start through two hours after end. Coaches review check-ins, and may close after that window to record absences.
+- Added RLS-protected invitation, attendance attempt, and attendance record tables and database RPCs. Removed direct client writes to memberships, sessions, and session codes. Anonymous execution was revoked for group ownership/member helper functions and the RLS event trigger.
+- Verified the live Supabase project reports RLS enabled on the three new tables, authenticated access for required RPCs, no anonymous RPC execution (including legacy helpers/event trigger), and no direct authenticated writes to membership/session/code tables. Security advisor still flags the intended authenticated `SECURITY DEFINER` workflow RPCs and the pre-existing disabled leaked-password protection; performance advisor reports unindexed foreign keys and several existing multiple-policy notices.
+- `npm run typecheck` — passed after the route and attendance changes.
+- `npm run build` — passed; generated PWA assets. Vite reports the existing single app chunk is above its 500 kB advisory threshold (534.52 kB minified).
+- Opened `http://localhost:5173`; the signed-out browser showed the expected Google-only sign-in screen. Dashboard routes require a Google-authenticated coach/student session for visual smoke testing.
+
 ## Next steps
 1. Configure the Supabase project and apply the migration.
 2. Implement trusted coach/student onboarding and group management.
