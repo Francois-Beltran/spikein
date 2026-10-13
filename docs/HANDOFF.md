@@ -37,7 +37,7 @@ Spike In is a mobile-first volleyball team attendance web app/PWA for coaches an
 - `supabase/migrations/` — versioned schema/RPC/policy changes; apply in timestamp order.
 - `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/PWA.md` — supporting docs. Some older sections in these files may not reflect recent work; prefer this handoff and the latest migrations when they conflict.
 
-## Attendance flow and current testing mode
+## Attendance flow and current attendance rules
 
 1. A verified Google student who is a member of the team submits a session code through `submit_attendance`. This creates one `pending` row in `attendance_attempts` for that student/session.
 2. The coach attendance page loads their sessions, attempts, athlete profiles, and attendance records. The PostgREST profile embed must name the student FK explicitly: `profiles!attendance_attempts_student_id_fkey(full_name)`, because attempts have both student and reviewer links to profiles.
@@ -45,7 +45,7 @@ Spike In is a mobile-first volleyball team attendance web app/PWA for coaches an
 4. Once eligible to close, `close_attendance_session` closes the session, rejects outstanding pending attempts, and marks remaining roster members absent.
 5. Coach actions refresh the relevant attendance and dashboard queries. Supabase error objects are plain objects in some cases, so use the shared `errorMessage` helper instead of relying only on `instanceof Error`.
 
-**The check-in time gate is intentionally disabled for testing.** `src/features/dashboard/attendanceConfig.ts` exports `ENFORCE_CHECKIN_WINDOW = false`; migration `20261013082000_disable_checkin_window_for_testing.sql` also sets the server-side `enforce_checkin_window` constant to `false`. Membership, verified Google student role, open session, and code hash checks remain active. Before deployment, the user must explicitly request enabling it; set both client and server switches to true and verify the 30-minutes-before / 2-hours-after rule.
+**The student check-in time gate is enabled.** `src/features/dashboard/attendanceConfig.ts` exports `ENFORCE_CHECKIN_WINDOW = true`; migration `20261013152608_restore_checkin_window_and_manual_attendance.sql` restores the server-side gate. Student code check-in is allowed from 30 minutes before the session until 2 hours after it ends, while the session remains open. The coach can open a session roster and use **Mark present** when a student forgets the code; the database verifies coach ownership and roster membership, records the coach, and resolves any pending check-in for that student. This coach action can correct attendance after the student check-in window or session closure.
 
 ## Latest incident and resolution
 
