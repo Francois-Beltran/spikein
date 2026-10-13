@@ -5,8 +5,8 @@ import { useCoachDashboard } from './useCoachDashboard'
 import { useStudentDashboard } from './useStudentDashboard'
 
 export function DashboardPage() {
-  const { profile } = useAuth()
-  return profile?.role === 'coach' ? <CoachOverview /> : <StudentOverview name={profile?.full_name ?? ''} />
+  const { profile, user } = useAuth()
+  return profile?.role === 'coach' ? <CoachOverview /> : <StudentOverview name={profile?.full_name ?? ''} email={user?.email ?? ''} />
 }
 
 function CoachOverview() {
@@ -28,10 +28,10 @@ function CoachOverview() {
   </div>
 }
 
-function StudentOverview({name}:{name:string}) {
+function StudentOverview({name,email}:{name:string;email:string}) {
   const {data,isLoading}=useStudentDashboard()
   const next=data?.sessions?.[0]
-  return <div className="space-y-6"><header><p className="text-xs text-muted">Player workspace</p><h1 className="mt-1 text-[30px] font-semibold tracking-[-.045em]">Hey{name?`, ${name.split(' ')[0]}`:''}</h1><p className="mt-2 text-sm text-muted">Your schedule and attendance.</p></header>
+  return <div className="space-y-6"><header><p className="text-xs text-muted">Player workspace</p><h1 className="mt-1 text-[30px] font-semibold tracking-[-.045em]">Hey{name?`, ${name.split(' ')[0]}`:''}</h1><p className="mt-2 text-sm text-muted">Your schedule and attendance.</p><p className="mt-2 text-xs text-muted">Signed in with Google as <span className="font-semibold text-ink">{email}</span></p></header>
     <section className="rounded-2xl bg-green p-5 text-white"><div className="text-xs font-semibold uppercase tracking-wider text-white/70">Next session</div><h2 className="mt-3 text-xl font-semibold">{isLoading?'Loading…':next?.title??'Nothing scheduled yet'}</h2>{next&&<p className="mt-2 text-sm text-white/75">{new Date(next.starts_at).toLocaleString()}</p>}<Link className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-lime px-4 text-sm font-semibold text-ink" to="/sessions">View sessions <Clock3 size={16}/></Link></section>
     <section className="rounded-2xl border border-line bg-white p-5 shadow-card"><div className="flex items-center justify-between"><h2 className="font-semibold">My teams</h2><Link to="/teams" className="text-sm font-semibold text-green">See all</Link></div>{data?.teams?.length?<div className="mt-3 space-y-3">{data.teams.slice(0,3).map(team=><div key={team.id} className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-green-light text-green"><Volleyball size={19}/></span><span className="font-medium">{team.name}</span></div>)}</div>:<p className="mt-3 text-sm text-muted">Your coach’s team invitation will appear here after you sign in with its Google account.</p>}</section>
     <Link to="/attendance" className="flex min-h-14 items-center gap-3 rounded-2xl border border-line bg-white p-4 text-sm font-semibold shadow-card"><CheckCheck className="text-green"/>View attendance history</Link>

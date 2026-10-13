@@ -9,6 +9,10 @@ export function useStudentDashboard() {
   return useQuery({
     queryKey: ['student-dashboard', user?.id],
     enabled: Boolean(supabase && user),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
     queryFn: async () => {
       if (!supabase || !user) throw new Error('Sign in to load your player dashboard.')
 

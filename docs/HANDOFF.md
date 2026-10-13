@@ -96,6 +96,7 @@
 - `npm run typecheck` — passed after the route and attendance changes.
 - `npm run build` — passed; generated PWA assets. Vite reports the existing single app chunk is above its 500 kB advisory threshold (534.52 kB minified).
 - Opened `http://localhost:5173`; the signed-out browser showed the expected Google-only sign-in screen. Dashboard routes require a Google-authenticated coach/student session for visual smoke testing.
+- Student team data now rechecks invitation claims on a 15-second foreground interval and when the page mounts. The student overview and team page show the signed-in Google email; the team page offers a manual refresh. Live data confirmed an accepted student invitation and membership while observed app requests were from the coach account, pointing to the student using a different Google identity or browser session.
 
 ## Next steps
 1. Configure the Supabase project and apply the migration.
