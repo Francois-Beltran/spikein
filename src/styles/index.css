@@ -58,23 +58,30 @@ button:active, a:active { transition-duration: 80ms; }
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: #0B3D1E;
-  animation: launch-fade 520ms cubic-bezier(.4, 0, .2, 1) 880ms forwards;
+  isolation: isolate;
+  background: radial-gradient(ellipse at 50% 45%, #176437 0%, #0B3D1E 66%);
+  animation: launch-fade 460ms cubic-bezier(.4, 0, .2, 1) 1290ms forwards;
 }
-.launch-lockup { display: flex; flex-direction: column; align-items: center; gap: 12px; animation: launch-arrive 620ms cubic-bezier(.2, .8, .2, 1) both; }
-.launch-ball { display: block; width: 104px; height: 104px; filter: drop-shadow(0 12px 20px rgba(0,0,0,.2)); animation: launch-serve 760ms cubic-bezier(.2, .75, .25, 1) both; }
-.launch-ball img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.launch-wordmark { color: #F6F8F4; font-size: 23px; font-weight: 800; letter-spacing: .14em; opacity: 0; animation: launch-wordmark 360ms ease-out 380ms forwards; }
+.launch-lockup { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; animation: launch-arrive 420ms ease-out both; }
+.launch-court { position: absolute; z-index: -1; top: -84px; left: 50%; width: min(78vw, 340px); height: min(78vw, 340px); border: 1px solid rgba(246,248,244,.13); border-radius: 50%; transform: translateX(-50%) scale(.88); animation: court-draw 900ms cubic-bezier(.2,.7,.2,1) 80ms both; }
+.launch-court::before, .launch-court::after { position: absolute; content: ''; }
+.launch-court::before { inset: 11%; border: 1px solid rgba(246,248,244,.12); border-radius: 50%; }
+.launch-court::after { left: 50%; top: 0; bottom: 0; border-left: 1px solid rgba(246,248,244,.12); }
+.launch-court-line { position: absolute; left: 8%; right: 8%; height: 1px; background: rgba(242,210,30,.34); transform: scaleX(0); }
+.launch-court-line-one { top: 34%; transform-origin: left; animation: court-line 460ms ease-out 260ms forwards; }
+.launch-court-line-two { bottom: 34%; transform-origin: right; animation: court-line 460ms ease-out 360ms forwards; }
+.launch-court-center { position: absolute; left: 50%; top: 50%; width: 28%; aspect-ratio: 1; border: 1px solid rgba(242,210,30,.25); border-radius: 50%; transform: translate(-50%,-50%) scale(.5); opacity: 0; animation: court-center 620ms ease-out 320ms forwards; }
+.launch-ball { position: relative; display: grid; width: 128px; height: 128px; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.72); border-radius: 50%; background: radial-gradient(circle at 36% 28%,#fffdf5 0%,#f0ead5 72%,#ddd6c0 100%); box-shadow: 0 18px 48px rgba(0,0,0,.26),0 0 46px rgba(242,210,30,.18),inset 0 1px 2px rgba(255,255,255,.9); animation: badge-arrive 720ms cubic-bezier(.18,.75,.2,1) both; }
+.launch-ball img { display: block; width: 112px; height: 112px; border-radius: 50%; object-fit: cover; clip-path: circle(50% at 50% 50%); }
+.launch-wordmark { color: #F6F8F4; font-size: 23px; font-weight: 800; letter-spacing: .14em; opacity: 0; animation: launch-wordmark 360ms ease-out 560ms forwards; }
 .launch-wordmark strong { color: #F2D21E; }
-.launch-caption { color: rgba(246,248,244,.72); font-size: 9px; font-weight: 650; letter-spacing: .24em; opacity: 0; animation: launch-wordmark 320ms ease-out 500ms forwards; }
-@keyframes launch-serve {
-  0% { opacity: 0; transform: translate3d(0, 48px, 0) rotate(-32deg) scale(.7); }
-  68% { opacity: 1; transform: translate3d(0, -8px, 0) rotate(14deg) scale(1.04); }
-  84% { transform: translate3d(0, 3px, 0) rotate(-5deg) scale(.98); }
-  100% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) scale(1); }
-}
+.launch-caption { color: rgba(246,248,244,.72); font-size: 9px; font-weight: 650; letter-spacing: .24em; opacity: 0; animation: launch-wordmark 320ms ease-out 720ms forwards; }
+@keyframes badge-arrive { 0% { opacity: 0; transform: translateY(24px) scale(.78); } 62% { opacity: 1; transform: translateY(-4px) scale(1.035); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes launch-arrive { from { opacity: 0; } to { opacity: 1; } }
 @keyframes launch-wordmark { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes court-draw { to { transform: translateX(-50%) scale(1); } }
+@keyframes court-line { to { transform: scaleX(1); } }
+@keyframes court-center { to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
 @keyframes launch-fade { to { opacity: 0; visibility: hidden; } }
 
 @media (prefers-reduced-motion: reduce) {

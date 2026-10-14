@@ -15,13 +15,14 @@ function LaunchIntro() {
 
   React.useEffect(() => {
     if (!visible) return
-    const timer = window.setTimeout(() => setVisible(false), 1450)
+    const timer = window.setTimeout(() => setVisible(false), 1750)
     return () => window.clearTimeout(timer)
   }, [visible])
 
   if (!visible) return null
   return <div className="launch-intro" aria-hidden="true">
     <div className="launch-lockup">
+      <div className="launch-court"><span className="launch-court-line launch-court-line-one"/><span className="launch-court-line launch-court-line-two"/><span className="launch-court-center"/></div>
       <span className="launch-ball"><img src="/icons/icon-512.png" alt="" /></span>
       <span className="launch-wordmark">SPIKE <strong>IN</strong></span>
       <span className="launch-caption">YOUR TEAM. IN SYNC.</span>
