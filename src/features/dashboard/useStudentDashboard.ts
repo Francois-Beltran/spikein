@@ -28,8 +28,8 @@ export function useStudentDashboard() {
       const [teamsResult, sessionsResult] = await Promise.all([
         supabase.from('groups').select('id,name,created_at').in('id', groupIds).order('created_at', { ascending: true }),
         ENFORCE_CHECKIN_WINDOW
-          ? supabase.from('sessions').select('id,group_id,title,type,starts_at,ends_at,closed_at').in('group_id', groupIds).gte('ends_at', earliest).order('starts_at', { ascending: true })
-          : supabase.from('sessions').select('id,group_id,title,type,starts_at,ends_at,closed_at').in('group_id', groupIds).order('starts_at', { ascending: true }),
+          ? supabase.from('sessions').select('id,group_id,title,type,starts_at,ends_at,closed_at,checkin_override_enabled').in('group_id', groupIds).or(`ends_at.gte.${earliest},checkin_override_enabled.eq.true`).order('starts_at', { ascending: true })
+          : supabase.from('sessions').select('id,group_id,title,type,starts_at,ends_at,closed_at,checkin_override_enabled').in('group_id', groupIds).order('starts_at', { ascending: true }),
       ])
       if (teamsResult.error) throw teamsResult.error
       if (sessionsResult.error) throw sessionsResult.error
