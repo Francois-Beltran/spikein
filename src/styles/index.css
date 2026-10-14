@@ -51,8 +51,35 @@ button:not(:disabled), a { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
 button:active, a:active { transition-duration: 80ms; }
 
+.launch-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #0B3D1E;
+  animation: launch-fade 520ms cubic-bezier(.4, 0, .2, 1) 880ms forwards;
+}
+.launch-lockup { display: flex; flex-direction: column; align-items: center; gap: 12px; animation: launch-arrive 620ms cubic-bezier(.2, .8, .2, 1) both; }
+.launch-ball { display: block; width: 104px; height: 104px; filter: drop-shadow(0 12px 20px rgba(0,0,0,.2)); animation: launch-serve 760ms cubic-bezier(.2, .75, .25, 1) both; }
+.launch-ball img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.launch-wordmark { color: #F6F8F4; font-size: 23px; font-weight: 800; letter-spacing: .14em; opacity: 0; animation: launch-wordmark 360ms ease-out 380ms forwards; }
+.launch-wordmark strong { color: #F2D21E; }
+.launch-caption { color: rgba(246,248,244,.72); font-size: 9px; font-weight: 650; letter-spacing: .24em; opacity: 0; animation: launch-wordmark 320ms ease-out 500ms forwards; }
+@keyframes launch-serve {
+  0% { opacity: 0; transform: translate3d(0, 48px, 0) rotate(-32deg) scale(.7); }
+  68% { opacity: 1; transform: translate3d(0, -8px, 0) rotate(14deg) scale(1.04); }
+  84% { transform: translate3d(0, 3px, 0) rotate(-5deg) scale(.98); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) rotate(0) scale(1); }
+}
+@keyframes launch-arrive { from { opacity: 0; } to { opacity: 1; } }
+@keyframes launch-wordmark { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes launch-fade { to { opacity: 0; visibility: hidden; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .launch-intro { display: none; }
 }
 @media (prefers-reduced-transparency: reduce) {
   .backdrop-blur-xl { background-color: #F6F8F4 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
