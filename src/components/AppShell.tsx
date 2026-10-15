@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ]
   const active = (to: string) => to === '/admin' ? location.pathname === to : location.pathname === to || location.pathname.startsWith(`${to}/`)
 
-  return <div className="min-h-screen bg-canvas text-ink lg:flex">
+  return <div className="min-h-screen min-w-0 max-w-full overflow-x-clip bg-canvas text-ink lg:flex">
     <aside className="hidden w-[258px] shrink-0 flex-col border-r border-line border-t-[3px] border-t-gold bg-white px-5 py-6 lg:flex">
       <Brand />
       <div className="mt-10 px-3 text-[10px] font-bold uppercase tracking-[.17em] text-[#a1aaa3]">Workspace</div>
@@ -48,4 +48,4 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   </div>
 }
 
-export function Brand({ onLight = false }: { onLight?: boolean }) { return <div className="flex items-center gap-2.5"><img src="/vsu-seal.jpg" alt="Visayas State University seal" className="h-10 w-10 rounded-full border border-white/70 bg-white object-cover shadow-sm"/><span className={`text-[19px] font-extrabold tracking-[-.045em] ${onLight ? 'text-ink' : 'text-white'}`}>spike<span className={onLight ? 'text-green' : 'text-gold'}>in</span><span className={`ml-1 text-[10px] font-medium tracking-normal ${onLight ? 'text-muted' : 'text-white/75'}`}>TEAM</span></span></div> }
+export function Brand({ onLight = false }: { onLight?: boolean }) { return <div className="flex min-w-0 items-center gap-2.5"><img src="/vsu-seal.jpg" alt="Visayas State University seal" className="h-10 w-10 shrink-0 rounded-full border border-white/70 bg-white object-cover shadow-sm"/><span className={`whitespace-nowrap text-[19px] font-extrabold tracking-[-.045em] ${onLight ? 'text-ink' : 'text-white'}`}><span>spike</span><span className={onLight ? 'text-green' : 'text-gold'}>in</span><span className={`ml-1 text-[10px] font-medium tracking-normal ${onLight ? 'text-muted' : 'text-white/75'}`}>TEAM</span></span></div> }

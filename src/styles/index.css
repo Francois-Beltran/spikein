@@ -15,7 +15,7 @@
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 1.25rem; }
-body { margin: 0; min-width: 320px; min-height: 100vh; min-height: 100dvh; }
+body { margin: 0; min-width: 320px; min-height: 100vh; min-height: 100dvh; max-width: 100%; overflow-x: clip; }
 button, input, select { font: inherit; }
 h1, h2, h3 { font-family: Georgia, 'Times New Roman', serif; font-optical-sizing: auto; }
 h1 { letter-spacing: -.035em !important; line-height: 1.1; }
