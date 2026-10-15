@@ -1,5 +1,7 @@
 # Progressive Web App
 
-Vite PWA generates the web manifest and service worker. The shell and static assets are precached, SPA navigation falls back to `/index.html`, and all Supabase project traffic uses `NetworkOnly`. The generated starter icons are brand placeholders and should be replaced with reviewed production artwork. Google Fonts are a remote visual enhancement; system sans-serif fonts are the offline fallback.
+Vite PWA generates the web manifest and service worker. The app shell and static assets are precached, navigation falls back to `/index.html`, and Supabase requests use `NetworkOnly` so session, profile, and attendance responses are never served from cache. Updated volleyball icons include a separate Android maskable icon. The manifest and document theme colors match the app's dark green launch animation.
 
-Network-dependent attendance actions are not yet implemented. When added, they must detect offline state, disable submission/review, and explain that a connection is required. Before release, verify install/update behavior and run a Lighthouse PWA audit on the deployed HTTPS build; test install on Android and iOS.
+The install button uses the browser's native install prompt when available. Android browsers require the app to be installable and may only expose that prompt after a user gesture; other browsers receive platform-specific install instructions. The website cannot replace Android's native splash screen, so the manifest icon and background provide the transition before the in-app launch animation.
+
+Sign-in, team joins, check-ins, and coach attendance actions require an active connection. Before inviting teammates, verify the deployed HTTPS build, Google OAuth redirect URLs, PWA install/update flow on Android and iOS, and the full coach/student attendance workflow on phones.

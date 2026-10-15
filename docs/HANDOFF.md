@@ -4,82 +4,54 @@ Updated: 2026-10-14
 
 ## Project at a glance
 
-Spike In is a mobile-first volleyball team attendance web app/PWA for coaches and students. It is a Vite + React 18 + TypeScript single-page app. Main libraries are React Router, TanStack Query, Tailwind CSS, `lucide-react`, and `@supabase/supabase-js`. Supabase provides Google OAuth, Postgres, RLS, and the workflow RPCs.
+Spike In is a phone-first volleyball team attendance PWA built with Vite, React, TypeScript, and Supabase.
 
 - Workspace: `D:\spikein`
-- Git branch: `main`
-- Remote: `https://github.com/Francois-Beltran/spikein.git`
-- Supabase project ref: `oydtgplnppkivpnnaars`
+- Branch: `develop`
+- Current commit: `2533137` (`Improve team management and attendance timing`), pushed to `origin/develop`
+- Supabase project ref: `oydtgplnppkivpnnaars` (project name: Spike In)
 - Local app: `http://localhost:5173`
-- Supabase client is configured from `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; `.env` is local and must never be copied into docs, logs, or commits.
+- Browser configuration uses `VITE_SUPABASE_URL` and the public anon key only. `.env` is local and must never be copied into docs, logs, or commits.
 
 ## Product and access rules
 
-- Google is the only sign-in/sign-up provider. OAuth asks Google to show its account chooser.
-- Authenticated sessions are checked for Google provider metadata before profile/dashboard access.
-- Students can create their own student profile after verified Google sign-in. Coach role must be provisioned by a trusted administrator; never add self-service role selection or role elevation.
-- Coaches enter at `/admin`; students enter at `/`. Routes are guarded by profile role.
-- Teams use shared coach-generated join codes (12 hexadecimal characters). Email invitations were removed.
-- Session check-in codes are eight characters. The database stores hashes only; coaches see a code on creation/rotation.
-- Dashboard design should remain phone-first and keep touch targets accessible. Apple Design and UI/UX Pro Max were used for prior dashboard work.
+- Google is the only sign-in/sign-up provider; OAuth asks for account selection.
+- Sessions are checked for trusted Google provider metadata before protected pages load.
+- Students may create a student profile after verified Google sign-in. Coaches are provisioned by a trusted administrator; there is no self-service role selection.
+- Coaches use `/admin`; students use `/`.
+- Students join teams with a coach-generated 12-character code. Session check-in codes are eight characters; the database stores only their hashes.
+- Coaches can delete a team. This permanently removes roster memberships, sessions, join codes, check-ins, and attendance records for that team; player accounts remain.
 
 ## Main code locations
 
 - `src/app/providers.tsx` — auth/profile state and React Query provider.
-- `src/app/router.tsx` — auth gates and role-based route routing.
+- `src/app/router.tsx` — auth gates and role-based routes.
 - `src/components/AppShell.tsx` — responsive workspace shell/navigation.
-- `src/features/auth/AuthPages.tsx` — Google OAuth, callback, student profile setup.
-- `src/features/dashboard/DashboardPage.tsx` — dashboard overview.
-- `src/features/dashboard/ManagementPages.tsx` — team/session management, student views, attendance submission/review.
-- `src/features/dashboard/useCoachDashboard.ts` / `useStudentDashboard.ts` — dashboard data queries.
-- `src/features/dashboard/attendanceConfig.ts` — client-side temporary attendance-window switch.
-- `src/lib/supabase.ts` — public anon-key client only.
-- `supabase/migrations/` — versioned schema/RPC/policy changes; apply in timestamp order.
-- `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/PWA.md` — supporting docs. Some older sections in these files may not reflect recent work; prefer this handoff and the latest migrations when they conflict.
+- `src/components/InstallAppButton.tsx` — browser install prompt and mobile install guidance.
+- `src/features/auth/AuthPages.tsx` — Google OAuth, callback, and student profile setup.
+- `src/features/dashboard/DashboardPage.tsx` — coach/student overview.
+- `src/features/dashboard/ManagementPages.tsx` — team/session management and attendance workflows.
+- `src/features/dashboard/attendanceConfig.ts` — client-side check-in window flag (currently enabled).
+- `supabase/migrations/` — ordered schema, RLS, and RPC changes.
 
-## Attendance flow and current attendance rules
+## Attendance behavior
 
-1. A verified Google student who is a member of the team submits a session code through `submit_attendance`. This creates one `pending` row in `attendance_attempts` for that student/session.
-2. The coach attendance page loads their sessions, attempts, athlete profiles, and attendance records. The PostgREST profile embed must name the student FK explicitly: `profiles!attendance_attempts_student_id_fkey(full_name)`, because attempts have both student and reviewer links to profiles.
-3. Coach approve/reject calls `review_attendance_attempt`. Approval updates the attempt and upserts a `present`/`late` row in `attendance_records`; rejection marks the attempt rejected and creates no attendance record. Coaches can also excuse a roster member from the session roster or a pending check-in card with a required reason (maximum 300 characters); the reason is stored on the attendance record and shown in the roster and student attendance history. Excusing a pending check-in rejects it with the reason in the coach note.
-4. Once eligible to close, `close_attendance_session` closes the session, rejects outstanding pending attempts, and marks remaining roster members absent.
-5. Coach actions refresh the relevant attendance and dashboard queries. Supabase error objects are plain objects in some cases, so use the shared `errorMessage` helper instead of relying only on `instanceof Error`.
+- A verified student on the roster submits a session code; the attempt waits for coach review.
+- Coaches can approve/reject attempts, excuse a student with a required reason, manually mark a student present, close a session, reopen it, and temporarily override the normal check-in window.
+- Normal student check-in opens 30 minutes before session start and closes two hours after session end.
+- An attendance record is marked late only when the code was submitted or the coach manually marked attendance more than two hours after session end. The latest migration also corrected existing records within the grace period.
+- Closing a session rejects pending attempts and marks remaining roster members absent. Reopening preserves existing records.
 
-**The student check-in time gate is enabled.** `src/features/dashboard/attendanceConfig.ts` exports `ENFORCE_CHECKIN_WINDOW = true`; migration `20261013152608_restore_checkin_window_and_manual_attendance.sql` restores the server-side gate. Migration `20261014012036_coach_excused_attendance_reason.sql` adds coach-managed excused attendance with a saved reason. Student code check-in is allowed from 30 minutes before the session until 2 hours after it ends, while the session remains open. Migration `20261014014239_session_reopen_and_checkin_override.sql` adds coach session reopening and an explicit check-in override. Reopening preserves all attendance records (including absence records); coaches can correct them manually, and an eligible new check-in can be approved afterward. Rejected attempts specifically closed before review can be retried. While the coach override is on, the current code works outside the normal time window and past code expiration; closing the session disables the override. Students see overridden sessions even after the normal end window. The coach can open a session roster and use **Mark present** when a student forgets the code; the database verifies coach ownership and roster membership, records the coach, and resolves any pending check-in for that student. This coach action can correct attendance after the student check-in window or session closure.
+## Database and deployment notes
 
-## Latest incident and resolution
+- The latest late-status migration was applied to the Spike In Supabase project and recorded there as version `20261014140423` (`late_only_after_two_hour_grace`). The local migration filename uses the same version.
+- Verify the deployed HTTPS URL, Supabase Auth Site URL/redirect allowlist, and Google OAuth callback setup before inviting teammates. The current Supabase connector cannot inspect those Auth URL settings.
+- Authentication and attendance actions require a network connection. Supabase requests use `NetworkOnly`; the app does not queue offline writes.
+- The web app cannot replace Android's native PWA splash screen; the cleaned manifest icon/background lead into the in-app launch animation.
 
-The recent pending-check-in issue had three connected causes/fixes:
+## Verification and caveats
 
-- PostgREST could not infer the athlete profile because `attendance_attempts` has more than one FK to `profiles`. The admin query now names `attendance_attempts_student_id_fkey`.
-- The admin loader previously hid Supabase's plain-object error. It now reports which request stage failed and the returned message, with refresh/retry support.
-- Approve/reject failed inside the live `review_attendance_attempt` RPC. The parameter `coach_note` conflicted with the table column in the `UPDATE`. Migration `20261013100000_fix_attendance_review_note_ambiguity.sql` stores a trimmed value in `normalized_note` and uses that variable in the update.
-
-The migration has been applied to Supabase project `oydtgplnppkivpnnaars`. The coach approval RPC was invoked under the authenticated coach identity inside a transaction and returned a `present` attendance record; rejection also completed. Both checks were rolled back. The existing check-in therefore remains pending in live data. Do not approve/reject that user's request unless the user asks.
-
-## Recent focused commits
-
-- `bf0bd11` — `fix attendance review end-to-end` (current latest)
-- `73fd6be` — `fix pending check-in profile relation`
-- `2e52316` — `fix admin attendance query errors`
-- `09828d1` — `fix: refresh coach pending check-ins`
-- `3eebf0a` — `chore: disable attendance window during testing`
-
-Continue with focused commits; do not bundle unrelated work. Current branch is `main`.
-
-## Verification and known caveats
-
-- `npx tsc --noEmit --noUnusedLocals false --noUnusedParameters false` passed after the latest attendance changes.
-- The strict project build currently reports an existing unused `Volleyball` import in `src/components/AppShell.tsx`. A direct Vite build also hit a Windows sandbox `EPERM` when resolving `index.html` in the last attempt. Do not report a complete production build until these blockers are resolved and the build succeeds.
+- `npm run typecheck` passed after the latest feature changes.
 - No automated test suite is configured in `package.json`.
-- Do not reveal `.env` values or use any service-role key in client code.
-- Existing `docs/DATABASE.md` has an older narrative that implies the check-in window is active; the latest testing migration and this file are authoritative until the window is re-enabled.
-
-## Useful commands
-
-- `npm run dev` — local development server.
-- `npm run typecheck` — strict TypeScript project check.
-- `npm run build` — TypeScript project build followed by Vite/PWA build.
-- `npm run preview` — serve the production output locally.
-
-When continuing, check `git status`, review this handoff and the newest migration, then inspect the live UI/API behavior relevant to the user's next request. Preserve the Google-only access rules and the temporary check-in testing mode unless the user explicitly directs otherwise.
+- A previous local production build hit a Windows sandbox `EPERM` while Vite resolved `index.html`; confirm the production build in the deployment environment.
+- Check `git status` and this handoff before continuing. Preserve Google-only sign-in and administrator-provisioned coach roles.
