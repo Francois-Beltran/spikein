@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { useCoachDashboard, type Team } from './useCoachDashboard'
 import { useStudentDashboard } from './useStudentDashboard'
 import { ENFORCE_CHECKIN_WINDOW } from './attendanceConfig'
+import { AttendanceExport } from './AttendanceExport'
 
 function PageHeader({eyebrow,title,description,action}:{eyebrow:string;title:string;description:string;action?:React.ReactNode}) { return <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-medium text-muted">{eyebrow}</p><h1 className="mt-1 text-[30px] font-semibold tracking-[-.045em]">{title}</h1><p className="mt-2 text-sm text-muted">{description}</p></div>{action}</header> }
 function ErrorMessage({children}:{children:string}) { return <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{children}</p> }
@@ -129,6 +130,7 @@ export function AdminAttendancePage() {
     {!(attempts.data?.attempts??[]).some((a:any)=>a.status==='pending')&&<p className="py-4 text-sm text-muted">No check-ins waiting for review.</p>}
    </div>}
   </Card>
+  <AttendanceExport teams={data?.teams ?? []} />
   <Card><h2 className="font-semibold">Session attendance</h2><div className="mt-3 divide-y divide-line">{sessions.map(s=>{const rows=(attempts.data?.records??[]).filter(r=>r.session_id===s.id);const canClose=new Date(s.ends_at).getTime()+2*60*60*1000<=Date.now();return <div className="py-4 first:pt-1 last:pb-0" key={s.id}><div className="flex flex-wrap items-center justify-between gap-2"><div><Link className="text-sm font-semibold text-green hover:underline" to={`/admin/sessions/${s.id}`}>{s.title}</Link><p className="mt-1 text-xs text-muted">{sessionTimeRange(s.starts_at,s.ends_at)}</p></div>{s.closed_at?<span className="rounded-full bg-canvas px-3 py-1 text-xs">Closed</span>:canClose?<button className="secondary-button min-h-10" disabled={close.isPending} onClick={()=>close.mutate(s.id)}>Close & mark absent</button>:<span className="text-xs text-muted">{new Date(s.ends_at)<new Date()?'Check-in open for 2 hours after end':'In progress / upcoming'}</span>}</div><p className="mt-2 text-xs text-muted">{rows.filter(r=>r.status==='present'||r.status==='late').length} attended · {rows.filter(r=>r.status==='absent').length} absent · {rows.filter(r=>r.status==='excused').length} excused</p></div>})}{!sessions.length&&<p className="py-4 text-sm text-muted">Schedule a session to start taking attendance.</p>}</div></Card>
  </div>
 }
