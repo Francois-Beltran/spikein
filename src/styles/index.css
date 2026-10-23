@@ -43,6 +43,31 @@ h2, h3 { letter-spacing: -.02em; }
 .google-button:disabled { opacity: .65; }
 .quick-link { display: flex; min-height: 60px; align-items: center; gap: 11px; border-top: 1px solid #E3EBE2; }
 .quick-link:first-of-type { margin-top: 10px; }
+.coach-shell { background: #f3f6f1; }
+.coach-sidebar { border-color: rgba(255,255,255,.09); border-top-color: #e9c568; background: linear-gradient(180deg,#143629 0%,#102b22 100%); color: #f7f8f3; }
+.coach-sidebar .coach-workspace-label { color: rgba(255,255,255,.7); }
+.coach-sidebar .nav-item { color: rgba(255,255,255,.72); }
+.coach-sidebar .nav-item:hover { background: rgba(255,255,255,.08); color: white; }
+.coach-sidebar .nav-item.nav-active { background: rgba(233,197,104,.14); color: #f2d487; box-shadow: inset 3px 0 #e9c568; }
+.coach-sidebar .mt-auto { border-color: rgba(255,255,255,.12); }
+.coach-sidebar .mt-5.rounded-xl { border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.07); }
+.coach-sidebar .mt-5.rounded-xl .bg-green-light { background: rgba(233,197,104,.18); color: #f2d487; }
+.coach-sidebar .mt-5.rounded-xl .text-muted { color: rgba(255,255,255,.58); }
+.coach-mobile-header { background: linear-gradient(115deg,#143629,#1d5239); }
+.coach-mobile-nav { border-color: #254b3a; background: rgba(16,43,34,.96); box-shadow: 0 -8px 28px rgba(13,37,28,.2); }
+.coach-mobile-nav .mobile-nav { color: rgba(255,255,255,.65); }
+.coach-mobile-nav .mobile-nav[aria-current="page"] { background: rgba(233,197,104,.12); color: #f2d487; }
+.coach-main { max-width: 1320px; }
+.coach-main h1, .coach-main h2, .coach-main h3 { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.coach-main .rounded-2xl.border.border-line.bg-white, .coach-main .overflow-hidden.rounded-2xl.border.border-line.bg-white { border-color: #e1e8de; box-shadow: 0 8px 24px rgba(25,63,41,.07); }
+.coach-main .primary-button { background: #174b35; box-shadow: 0 3px 9px rgba(23,75,53,.12); }
+.coach-main .primary-button:hover { background: #103a29; box-shadow: 0 5px 14px rgba(23,75,53,.2); }
+.coach-main .secondary-button { border-color: #b8c9ba; color: #174b35; }
+.coach-main .secondary-button:hover { border-color: #174b35; background: #edf4ed; }
+.coach-dashboard > header.coach-hero { display: flex; min-height: 190px; flex-direction: column; justify-content: space-between; gap: 1.5rem; overflow: hidden; border: 1px solid rgba(241,199,102,.22); border-radius: 24px; background: radial-gradient(circle at 90% 10%,rgba(241,199,102,.16),transparent 29%),linear-gradient(125deg,#143629 0%,#20583c 58%,#2d6647 100%); padding: 1.5rem; color: white; box-shadow: 0 14px 32px rgba(20,54,41,.16); }
+.coach-hero h1 { color: white; }
+.coach-hero-date { display: flex; width: fit-content; min-width: 150px; flex-direction: column; border: 1px solid rgba(255,255,255,.14); border-radius: 15px; background: rgba(255,255,255,.08); padding: .9rem 1rem; backdrop-filter: blur(8px); }
+@media (min-width: 640px) { .coach-dashboard > header.coach-hero { min-height: 210px; flex-direction: row; align-items: flex-end; padding: 2rem 2.25rem; } }
 .skip-link { position: fixed; left: 12px; top: 12px; z-index: 50; transform: translateY(-150%); border-radius: 8px; background: #fff; padding: 12px 16px; color: #111A14; box-shadow: 0 4px 20px rgba(17,26,20,.16); }
 .skip-link:focus { transform: translateY(0); }
 :focus-visible { outline: 3px solid #1E7A40; outline-offset: 3px; }
