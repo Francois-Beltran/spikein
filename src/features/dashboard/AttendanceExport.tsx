@@ -82,7 +82,7 @@ export function AttendanceExport({ teams }: Props) {
         recordsByKey.set(`${record.session_id}:${record.student_id}`, record)
       }
 
-      const rows: Array<Record<string, string | number | Date>> = []
+      const detailRows: Array<Array<string | number | Date>> = []
       const counts = new Map<string, { team: string; player: string; total: number; present: number; late: number; absent: number; excused: number; unrecorded: number }>()
       for (const session of sessions) {
         const roster = new Map([...memberNames.entries()].filter(([key]) => key.startsWith(`${session.group_id}:`)).map(([key, name]) => [key.slice(session.group_id.length + 1), name]))
@@ -91,21 +91,22 @@ export function AttendanceExport({ teams }: Props) {
           const profile = record.profiles as unknown as { full_name: string } | null
           if (!roster.has(record.student_id)) roster.set(record.student_id, profile?.full_name ?? 'Player')
         }
+        const sessionRows: Array<Array<string | number | Date>> = []
         for (const [studentId, player] of roster) {
           const record = recordsByKey.get(`${session.id}:${studentId}`)
           const status = (record?.status ?? 'Not recorded') as AttendanceStatus
           const team = teamNames.get(session.group_id) ?? 'Team'
-          rows.push({
-            Date: localDateValue(new Date(session.starts_at)),
-            'Start time': timeLabel(session.starts_at),
-            Team: team,
-            Session: session.title,
-            Type: session.type,
-            Player: player,
-            'Attendance status': status,
-            'Recorded at': record?.recorded_at ? new Date(record.recorded_at).toLocaleString() : '',
-            'Excusal reason': record?.reason ?? '',
-          })
+          sessionRows.push([
+            localDateValue(new Date(session.starts_at)),
+            timeLabel(session.starts_at),
+            team,
+            session.title,
+            session.type,
+            player,
+            status,
+            record?.recorded_at ? new Date(record.recorded_at).toLocaleString() : '',
+            record?.reason ?? '',
+          ])
           const summaryKey = `${team}:${player}`
           const summary = counts.get(summaryKey) ?? { team, player, total: 0, present: 0, late: 0, absent: 0, excused: 0, unrecorded: 0 }
           summary.total += 1
@@ -113,13 +114,18 @@ export function AttendanceExport({ teams }: Props) {
           else summary[status] += 1
           counts.set(summaryKey, summary)
         }
+        if (sessionRows.length) {
+          if (detailRows.length) detailRows.push([])
+          detailRows.push(...sessionRows)
+        }
       }
-      if (!rows.length) throw new Error('No rostered players were found for those sessions.')
+      if (!detailRows.length) throw new Error('No rostered players were found for those sessions.')
 
       const workbook = XLSX.utils.book_new()
-      const detailSheet = XLSX.utils.json_to_sheet(rows, { header: ['Date', 'Start time', 'Team', 'Session', 'Type', 'Player', 'Attendance status', 'Recorded at', 'Excusal reason'] })
+      const detailHeaders = ['Date', 'Start time', 'Team', 'Session', 'Type', 'Player', 'Attendance status', 'Recorded at', 'Excusal reason']
+      const detailSheet = XLSX.utils.aoa_to_sheet([detailHeaders, ...detailRows])
       detailSheet['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 22 }, { wch: 28 }, { wch: 14 }, { wch: 24 }, { wch: 20 }, { wch: 20 }, { wch: 36 }]
-      detailSheet['!autofilter'] = { ref: `A1:I${Math.max(rows.length + 1, 1)}` }
+      detailSheet['!autofilter'] = { ref: `A1:I${detailRows.length + 1}` }
       detailSheet['!freeze'] = { xSplit: 0, ySplit: 1 }
       XLSX.utils.book_append_sheet(workbook, detailSheet, 'Attendance')
 
