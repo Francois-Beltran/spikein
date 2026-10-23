@@ -66,7 +66,7 @@ export function AttendanceExport({ teams }: Props) {
       const sessionIds = sessions.map(session => session.id)
       const [membersResult, recordsResult] = await Promise.all([
         supabase.from('group_members').select('group_id,student_id,profiles(full_name)').in('group_id', teamIds),
-        supabase.from('attendance_records').select('session_id,student_id,status,recorded_at,reason,profiles(full_name)').in('session_id', sessionIds),
+        supabase.from('attendance_records').select('session_id,student_id,status,recorded_at,reason,profiles!attendance_records_student_id_fkey(full_name)').in('session_id', sessionIds),
       ])
       if (membersResult.error) throw membersResult.error
       if (recordsResult.error) throw recordsResult.error
@@ -148,7 +148,15 @@ export function AttendanceExport({ teams }: Props) {
 
       XLSX.writeFile(workbook, `attendance_${fromDate}_to_${toDate}.xlsx`, { compression: true })
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not export attendance. Please try again.')
+      const caughtError = caught && typeof caught === 'object' ? caught as { message?: unknown; code?: unknown; status?: unknown } : null
+      const message = typeof caughtError?.message === 'string' ? caughtError.message : caught instanceof Error ? caught.message : ''
+      if (caughtError?.status === 540 || caughtError?.code === '540' || /540|project.*paused|project.*inactive/i.test(message)) {
+        setError('Attendance data is temporarily unavailable because the database project is paused. Ask the project owner to resume it, then try the export again.')
+      } else if (/failed to fetch|networkerror|load failed/i.test(message)) {
+        setError('Could not reach attendance data. Check your connection and try again.')
+      } else {
+        setError(message || 'Could not export attendance. Please try again.')
+      }
     } finally {
       setBusy(false)
     }
