@@ -9,12 +9,16 @@ function message(error: unknown, fallback: string) {
 
 export function SessionQrSharing({ sessionId, sessionClosed }: { sessionId: string; sessionClosed: boolean }) {
   const qc = useQueryClient()
+  const currentSessionId = useRef(sessionId)
+  currentSessionId.current = sessionId
   const [token, setToken] = useState('')
+  const [qrSessionId, setQrSessionId] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
   const [qrImage, setQrImage] = useState('')
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [error, setError] = useState('')
   const receivedInitialStatus = useRef(false)
+  const observedSessionId = useRef(sessionId)
   const status = useQuery({
     queryKey: ['session-qr-sharing', sessionId],
     enabled: Boolean(supabase && sessionId),
@@ -25,70 +29,82 @@ export function SessionQrSharing({ sessionId, sessionClosed }: { sessionId: stri
       return data as { sharing_open: boolean; token_expires_at: string | null }
     },
   })
-  const setQr = async (result: { sharing_open: boolean; qr_token?: string | null; token_expires_at?: string | null }) => {
+  const setQr = async (result: { sharing_open: boolean; qr_token?: string | null; token_expires_at?: string | null }, resultSessionId: string) => {
     if (!result.sharing_open || !result.qr_token || !result.token_expires_at) {
-      setToken(''); setExpiresAt(''); setQrImage(''); return
+      if (currentSessionId.current === resultSessionId) { setToken(''); setQrSessionId(''); setExpiresAt(''); setQrImage('') }
+      return
     }
     setQrImage('')
     const { default: QRCode } = await import('qrcode')
     const image = await QRCode.toDataURL(result.qr_token, { errorCorrectionLevel: 'M', margin: 2, width: 320 })
+    if (currentSessionId.current !== resultSessionId) return
     setToken(result.qr_token)
+    setQrSessionId(resultSessionId)
     setExpiresAt(result.token_expires_at)
     setQrImage(image)
     setError('')
   }
   const issue = useMutation({
-    mutationFn: async (action: 'open' | 'rotate') => {
+    mutationFn: async ({ action, targetSession }: { action: 'open' | 'rotate'; targetSession: string }) => {
       if (!supabase) throw new Error('Supabase is unavailable')
-      const { data, error } = await supabase.rpc(action === 'open' ? 'open_session_qr_sharing' : 'rotate_session_qr_token', { target_session: sessionId })
+      const { data, error } = await supabase.rpc(action === 'open' ? 'open_session_qr_sharing' : 'rotate_session_qr_token', { target_session: targetSession })
       if (error) throw error
-      return data as { sharing_open: boolean; qr_token: string | null; token_expires_at: string | null }
+      return { ...(data as { sharing_open: boolean; qr_token: string | null; token_expires_at: string | null }), sessionId: targetSession }
     },
     onSuccess: async result => {
-      await setQr(result)
-      qc.setQueryData(['session-qr-sharing', sessionId], { sharing_open: result.sharing_open, token_expires_at: result.token_expires_at })
-      await qc.invalidateQueries({ queryKey: ['session-qr-sharing', sessionId] })
+      if (currentSessionId.current === result.sessionId) {
+        await setQr(result, result.sessionId)
+        qc.setQueryData(['session-qr-sharing', result.sessionId], { sharing_open: result.sharing_open, token_expires_at: result.token_expires_at })
+      }
+      await qc.invalidateQueries({ queryKey: ['session-qr-sharing', result.sessionId] })
     },
-    onError: e => setError(message(e, 'Could not refresh the QR code.')),
+    onError: (e, variables) => { if (currentSessionId.current === variables.targetSession) setError(message(e, 'Could not refresh the QR code.')) },
   })
   const close = useMutation({
-    mutationFn: async () => { if (!supabase) throw new Error('Supabase is unavailable'); const { error } = await supabase.rpc('close_session_qr_sharing', { target_session: sessionId }); if (error) throw error },
-    onSuccess: async () => {
-      setToken(''); setQrImage(''); setExpiresAt(''); setError('')
-      qc.setQueryData(['session-qr-sharing', sessionId], { sharing_open: false, token_expires_at: null })
-      await qc.invalidateQueries({ queryKey: ['session-qr-sharing', sessionId] })
+    mutationFn: async (targetSession: string) => { if (!supabase) throw new Error('Supabase is unavailable'); const { error } = await supabase.rpc('close_session_qr_sharing', { target_session: targetSession }); if (error) throw error },
+    onSuccess: async (_, targetSession) => {
+      if (currentSessionId.current === targetSession) {
+        setToken(''); setQrSessionId(''); setQrImage(''); setExpiresAt(''); setError('')
+        qc.setQueryData(['session-qr-sharing', targetSession], { sharing_open: false, token_expires_at: null })
+      }
+      await qc.invalidateQueries({ queryKey: ['session-qr-sharing', targetSession] })
     },
-    onError: e => setError(message(e, 'Could not close QR sharing.')),
+    onError: (e, targetSession) => { if (currentSessionId.current === targetSession) setError(message(e, 'Could not close QR sharing.')) },
   })
 
   useEffect(() => {
+    if (observedSessionId.current !== sessionId) {
+      observedSessionId.current = sessionId
+      receivedInitialStatus.current = false
+      setToken(''); setQrSessionId(''); setExpiresAt(''); setQrImage(''); setSecondsLeft(0); setError('')
+    }
     if (!status.data) return
     const initialStatus = !receivedInitialStatus.current
     receivedInitialStatus.current = true
-    if (initialStatus && status.data.sharing_open && !sessionClosed) issue.mutate('rotate')
-    if (!status.data.sharing_open || sessionClosed) { setToken(''); setQrImage(''); setExpiresAt('') }
+    if (initialStatus && status.data.sharing_open && !sessionClosed) issue.mutate({ action: 'rotate', targetSession: sessionId })
+    if (!status.data.sharing_open || sessionClosed) { setToken(''); setQrSessionId(''); setQrImage(''); setExpiresAt('') }
   // On mount, status reveals no raw token; replace it with a fresh one.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status.data?.sharing_open, sessionClosed, sessionId])
 
   useEffect(() => {
-    if (!token || !expiresAt) { setSecondsLeft(0); return }
+    if (!token || !expiresAt || qrSessionId !== sessionId) { setSecondsLeft(0); return }
     const tick = () => setSecondsLeft(Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000)))
     tick()
     const timer = window.setInterval(tick, 1000)
     return () => window.clearInterval(timer)
-  }, [token, expiresAt])
+  }, [token, expiresAt, qrSessionId, sessionId])
 
   useEffect(() => {
-    if (!token || !secondsLeft) return
-    const timer = window.setTimeout(() => issue.mutate('rotate'), Math.max(0, new Date(expiresAt).getTime() - Date.now()))
+    if (!token || qrSessionId !== sessionId || !secondsLeft) return
+    const timer = window.setTimeout(() => issue.mutate({ action: 'rotate', targetSession: sessionId }), Math.max(0, new Date(expiresAt).getTime() - Date.now()))
     return () => window.clearTimeout(timer)
   // Token expiry is the rotation schedule.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, expiresAt])
+  }, [token, expiresAt, qrSessionId, sessionId])
 
   const sharingOpen = status.data?.sharing_open && !sessionClosed
-  const expired = !token || secondsLeft <= 0
+  const expired = qrSessionId !== sessionId || !token || secondsLeft <= 0
   return <section className="max-w-xl rounded-2xl border border-line bg-white p-4 shadow-card sm:p-5">
     <div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-green-light text-green"><QrCode size={21}/></span><div><h2 className="font-semibold">QR attendance sharing</h2><p className="mt-1 text-sm text-muted">Players scan this inside Spike In. Check-ins still need your review.</p></div></div>
     {sessionClosed ? <p className="mt-4 rounded-xl bg-canvas p-3 text-sm text-muted">Reopen this session before sharing an attendance QR.</p> : sharingOpen ? <>
@@ -96,8 +112,8 @@ export function SessionQrSharing({ sessionId, sessionClosed }: { sessionId: stri
         {qrImage && !expired ? <img className="mx-auto h-auto w-full max-w-72 rounded-xl bg-white p-2" src={qrImage} alt="Rotating attendance QR code"/> : <div className="mx-auto grid aspect-square w-full max-w-72 place-items-center rounded-xl bg-white text-sm text-muted"><span>{expired ? 'QR needs refreshing' : 'Preparing QR code…'}</span></div>}
         <p role="timer" aria-live="off" className="mt-3 text-sm font-semibold">{expired ? 'QR needs refreshing' : `Refreshes in ${secondsLeft}s`}</p>
       </div>
-      <div className="mt-3 flex flex-wrap gap-2"><button type="button" className="secondary-button min-h-11" disabled={issue.isPending} onClick={() => issue.mutate('rotate')}>{issue.isPending ? <LoaderCircle size={16} className="animate-spin"/> : <RefreshCw size={16}/>}Refresh QR</button><button type="button" className="secondary-button min-h-11 border-red-200 text-red-700 hover:bg-red-50" disabled={close.isPending} onClick={() => close.mutate()}>{close.isPending ? <LoaderCircle size={16} className="animate-spin"/> : <X size={16}/>}Close sharing</button></div>
-    </> : <button type="button" className="primary-button mt-4 min-h-11" disabled={issue.isPending || status.isLoading} onClick={() => issue.mutate('open')}>{issue.isPending ? <LoaderCircle size={17} className="animate-spin"/> : <QrCode size={17}/>}Open QR sharing</button>}
+      <div className="mt-3 flex flex-wrap gap-2"><button type="button" className="secondary-button min-h-11" disabled={issue.isPending} onClick={() => issue.mutate({ action: 'rotate', targetSession: sessionId })}>{issue.isPending ? <LoaderCircle size={16} className="animate-spin"/> : <RefreshCw size={16}/>}Refresh QR</button><button type="button" className="secondary-button min-h-11 border-red-200 text-red-700 hover:bg-red-50" disabled={close.isPending} onClick={() => close.mutate(sessionId)}>{close.isPending ? <LoaderCircle size={16} className="animate-spin"/> : <X size={16}/>}Close sharing</button></div>
+    </> : <button type="button" className="primary-button mt-4 min-h-11" disabled={issue.isPending || status.isLoading} onClick={() => issue.mutate({ action: 'open', targetSession: sessionId })}>{issue.isPending ? <LoaderCircle size={17} className="animate-spin"/> : <QrCode size={17}/>}Open QR sharing</button>}
     {error && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}{sharingOpen && expired ? ' The displayed QR is no longer valid.' : ''}</p>}
     {status.isError && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">{message(status.error, 'Could not load QR sharing status.')}</p>}
   </section>
