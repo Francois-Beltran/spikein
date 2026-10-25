@@ -20,3 +20,5 @@ Session codes are intentionally inaccessible to students and are stored only as 
 
 `20261014140423_late_only_after_two_hour_grace.sql` changes attendance classification: a check-in is late only when its submission (or a coach's manual mark) occurs more than two hours after the session ends. It also corrects existing late records that fall within that grace period. Deleting a coach-owned team from the Teams page cascades to its memberships, sessions, check-in codes, and attendance data; player accounts remain.
 
+`20261025054027_coach_managed_qr_checkin.sql` adds coach-managed QR sharing for a session. The protected share table stores only the active flag, token digest, and expiry; coach RPCs open, read, rotate, and close sharing. Students submit scans through `submit_session_qr_attendance`, which applies the same verified-account, roster, session timing, and one-attempt rules as typed-code check-in. Valid QR submissions create pending attempts for the existing coach review workflow. Closing a session also invalidates its QR token.
+
