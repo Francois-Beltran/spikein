@@ -36,7 +36,8 @@ export function SessionQrSharing({ sessionId, sessionClosed }: { sessionId: stri
     }
     setQrImage('')
     const { default: QRCode } = await import('qrcode')
-    const image = await QRCode.toDataURL(result.qr_token, { errorCorrectionLevel: 'M', margin: 2, width: 320 })
+    const payload = JSON.stringify({ session_id: resultSessionId, token: result.qr_token })
+    const image = await QRCode.toDataURL(payload, { errorCorrectionLevel: 'M', margin: 2, width: 320 })
     if (currentSessionId.current !== resultSessionId) return
     setToken(result.qr_token)
     setQrSessionId(resultSessionId)
@@ -119,7 +120,7 @@ export function SessionQrSharing({ sessionId, sessionClosed }: { sessionId: stri
   </section>
 }
 
-export function SessionQrScanner({ onScan, onClose }: { onScan: (token: string) => void; onClose: () => void }) {
+export function SessionQrScanner({ expectedSessionId, onScan, onClose }: { expectedSessionId: string; onScan: (token: string) => void; onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const scannerRef = useRef<import('qr-scanner').default | null>(null)
   const submitted = useRef(false)
@@ -136,10 +137,25 @@ export function SessionQrScanner({ onScan, onClose }: { onScan: (token: string) 
     scanner = new QrScanner(video, result => {
       if (submitted.current) return
       const value = result.data.trim()
-      if (!/^[a-fA-F0-9]{48}$/.test(value)) { setError('That QR code is not a valid Spike In attendance code. Try again.'); return }
+      let token = value
+      if (value.startsWith('{')) {
+        try {
+          const payload = JSON.parse(value) as { session_id?: unknown; token?: unknown }
+          if (payload.session_id !== expectedSessionId) {
+            setError('This QR code belongs to a different session. Scan the QR shown for this session.')
+            return
+          }
+          if (typeof payload.token !== 'string') throw new Error('Invalid QR payload')
+          token = payload.token
+        } catch {
+          setError('That QR code is not a valid Spike In attendance code. Try again.')
+          return
+        }
+      }
+      if (!/^[a-fA-F0-9]{48}$/.test(token)) { setError('That QR code is not a valid Spike In attendance code. Try again.'); return }
       submitted.current = true
       scanner?.stop()
-      onScanRef.current(value.toUpperCase())
+      onScanRef.current(token.toUpperCase())
     }, {
       preferredCamera: 'environment',
       returnDetailedScanResult: true,
