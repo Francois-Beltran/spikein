@@ -24,3 +24,5 @@ Session codes are intentionally inaccessible to students and are stored only as 
 
 `20261025055544_allow_custom_session_types.sql` changes `sessions.type` to text and updates the coach session creation RPC to accept custom types. The session form suggests the standard types and types used in the coach's previous sessions while allowing free entry.
 
+`20261025063742_coach_mark_student_absent.sql` adds a coach-only RPC to manually mark a roster member absent for one session. It records the coach, replaces any existing attendance status, and rejects any pending attempt so it cannot later be approved over the coach's decision.
+
