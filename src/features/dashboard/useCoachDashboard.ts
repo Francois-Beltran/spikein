@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../app/providers'
 
 export type Team = { id: string; name: string; created_at: string }
-export type TeamSession = { id: string; group_id: string; title: string; type: 'practice'|'game'|'tournament'; starts_at: string; ends_at: string; closed_at: string|null; checkin_override_enabled: boolean }
+export type TeamSession = { id: string; group_id: string; title: string; type: string; starts_at: string; ends_at: string; closed_at: string|null; checkin_override_enabled: boolean }
 
 export function useCoachDashboard() {
   const { user } = useAuth()

@@ -22,3 +22,5 @@ Session codes are intentionally inaccessible to students and are stored only as 
 
 `20261025054027_coach_managed_qr_checkin.sql` adds coach-managed QR sharing for a session. The protected share table stores only the active flag, token digest, and expiry; coach RPCs open, read, rotate, and close sharing. Students submit scans through `submit_session_qr_attendance`, which applies the same verified-account, roster, session timing, and one-attempt rules as typed-code check-in. Valid QR submissions create pending attempts for the existing coach review workflow. Closing a session also invalidates its QR token.
 
+`20261025055544_allow_custom_session_types.sql` changes `sessions.type` to text and updates the coach session creation RPC to accept custom types. The session form suggests the standard types and types used in the coach's previous sessions while allowing free entry.
+
