@@ -3,6 +3,7 @@ import { useAuth } from './providers'
 import { AppShell } from '../components/AppShell'
 import { SignInPage, SetupPage, GoogleCallbackPage, CompleteProfilePage } from '../features/auth/AuthPages'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
+import { ContributionsPage } from '../features/contributions/ContributionsPage'
 import { AdminAttendancePage, NewSessionPage, NewTeamPage, SessionDetailPage, SessionsPage, StudentAttendancePage, StudentSessionsPage, StudentTeamsPage, StudentTeamDetailPage, TeamDetailPage, TeamsPage } from '../features/dashboard/ManagementPages'
 
 function RootGate() {
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
     { path: 'admin/sessions/new', element: <RoleGate role="coach"><NewSessionPage /></RoleGate> },
     { path: 'admin/sessions/:sessionId', element: <RoleGate role="coach"><SessionDetailPage /></RoleGate> },
     { path: 'admin/attendance', element: <RoleGate role="coach"><AdminAttendancePage /></RoleGate> },
+    { path: 'contributions', element: <ContributionsPage /> },
     { path: 'sessions', element: <RoleGate role="student"><StudentSessionsPage /></RoleGate> },
     { path: 'teams', element: <RoleGate role="student"><StudentTeamsPage /></RoleGate> },
     { path: 'teams/:teamId', element: <RoleGate role="student"><StudentTeamDetailPage /></RoleGate> },

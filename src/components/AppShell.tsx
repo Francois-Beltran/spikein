@@ -1,4 +1,4 @@
-import { CalendarDays, CheckCheck, CircleHelp, LayoutDashboard, LogOut, Users, X } from 'lucide-react'
+import { CalendarDays, CheckCheck, CircleHelp, LayoutDashboard, LogOut, ReceiptText, Users, X } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from '../app/providers'
@@ -15,12 +15,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       { to: '/admin/teams', label: 'Teams', icon: Users },
       { to: '/admin/sessions', label: 'Sessions', icon: CalendarDays },
       { to: '/admin/attendance', label: 'Attendance', icon: CheckCheck },
+      { to: '/contributions', label: 'Dues', icon: ReceiptText },
     ]
     : [
       { to: '/', label: 'Home', icon: LayoutDashboard },
       { to: '/sessions', label: 'Sessions', icon: CalendarDays },
       { to: '/teams', label: 'My teams', icon: Users },
       { to: '/attendance', label: 'Attendance', icon: CheckCheck },
+      { to: '/contributions', label: 'Dues', icon: ReceiptText },
     ]
   const active = (to: string) => to === '/admin' ? location.pathname === to : location.pathname === to || location.pathname.startsWith(`${to}/`)
 
@@ -36,7 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className={`flex min-h-[64px] items-center justify-between border-b-[3px] border-b-gold bg-green px-4 pt-[env(safe-area-inset-top)] text-white sm:px-5 lg:hidden ${coach ? 'coach-mobile-header' : ''}`}><Brand /><div className="flex items-center gap-1"><InstallAppButton /><button onClick={() => setConfirmSignOut(true)} aria-label="Sign out" className="grid min-h-11 min-w-11 place-items-center rounded-lg text-white/90 transition-colors hover:bg-white/10 active:bg-white/20"><LogOut aria-hidden="true" size={19} /></button></div></header>
       <a href="#main-content" className="skip-link">Skip to content</a>
       <main id="main-content" tabIndex={-1} className={`mx-auto max-w-[1200px] px-4 py-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-8 sm:py-9 lg:px-10 lg:pb-12 ${coach ? 'coach-main' : ''}`}>{children}</main>
-      <nav aria-label="Main navigation" className={`fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t border-line bg-white/88 px-1 pt-2 pb-[max(.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(11,61,30,.08)] backdrop-blur-xl lg:hidden ${coach ? 'coach-mobile-nav' : ''}`}>{nav.map(({ to, label, icon: Icon }) => <Link key={label} to={to} aria-current={active(to) ? 'page' : undefined} className={`mobile-nav min-h-12 rounded-lg transition-colors active:bg-green-light ${active(to) ? 'text-green' : 'text-muted'}`}><Icon aria-hidden="true" size={20} strokeWidth={1.8} /><span>{label}</span></Link>)}</nav>
+      <nav aria-label="Main navigation" className={`fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t border-line bg-white/88 px-1 pt-2 pb-[max(.5rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(11,61,30,.08)] backdrop-blur-xl lg:hidden ${coach ? 'coach-mobile-nav' : ''}`}>{nav.map(({ to, label, icon: Icon }) => <Link key={label} to={to} aria-current={active(to) ? 'page' : undefined} className={`mobile-nav min-h-12 rounded-lg transition-colors active:bg-green-light ${active(to) ? 'text-green' : 'text-muted'}`}><Icon aria-hidden="true" size={20} strokeWidth={1.8} /><span>{label}</span></Link>)}</nav>
     </div>
     {confirmSignOut && <div className="fixed inset-0 z-50 grid place-items-center bg-ink/45 p-4" role="presentation" onClick={() => setConfirmSignOut(false)}>
       <section role="alertdialog" aria-modal="true" aria-labelledby="sign-out-title" aria-describedby="sign-out-description" className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl" onClick={event => event.stopPropagation()}>
