@@ -26,3 +26,5 @@ Session codes are intentionally inaccessible to students and are stored only as 
 
 `20261025063742_coach_mark_student_absent.sql` adds a coach-only RPC to manually mark a roster member absent for one session. It records the coach, replaces any existing attendance status, and rejects any pending attempt so it cannot later be approved over the coach's decision.
 
+`20261029000000_team_contributions.sql` adds team contribution targets, finance duty assignments, approved and pending payments, receipt numbers, and immutable correction entries. Amounts are stored in integer centavos. The coach assigns a rostered treasurer and auditor; the treasurer records approved payments and approves auditor entries. Payers see their own records, while the coach and finance staff see the team ledger. Payment changes use protected RPCs and preserve correction history. Apply this migration before opening the Contributions page.
+
